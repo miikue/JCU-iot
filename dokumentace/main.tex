@@ -1,0 +1,143 @@
+\documentclass[12pt, twoside]{report} % Definuje typ dokumentu (článek)
+\usepackage[
+    inner=3cm,      % Okraj u hřbetu (vnitřní)
+    outer=2.2cm,    % Vnější okraj
+    top=2.5cm,      % (Doporučeno definovat i nahoře/dole)
+    bottom=2.5cm
+]{geometry}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{circuitikz}
+\usetikzlibrary{shapes.geometric, arrows.meta}
+
+\tikzset{
+    startstop/.style = {rectangle, rounded corners, minimum width=2.8cm, minimum height=1cm, text centered, draw=black, fill=red!30, text width=2.7cm},
+    process/.style = {rectangle, minimum width=2.8cm, minimum height=1cm, text centered, draw=black, fill=orange!30, text width=2.7cm},
+    decision/.style = {diamond, minimum width=2.8cm, minimum height=1cm, text centered, draw=black, fill=yellow!30, text width=2cm, inner sep=0pt},
+    arrow/.style = {thick, ->, >=stealth}
+}
+\usepackage{mathptmx}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{microtype}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor} % Pro barvy
+
+\usepackage[backend=biber, style=numeric]{biblatex}
+\addbibresource{literatura.bib}
+
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\small, % Písmo stroje
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    commentstyle=\color{green!50!black},
+    numbers=left, % Číslování řádků
+    numberstyle=\tiny\color{gray},
+    frame=single, % Rámeček okolo
+    breaklines=true % Zalamování dlouhých řádků
+}
+
+\newcommand{\Univerzita}{Jihočeská univerzita v Českých Budějovicích}
+\newcommand{\Fakulta}{Přírodovědecká fakulta}
+\newcommand{\NazevPrace}{Hlídací systém kotelny s využítím platformy Blynk}
+\newcommand{\TypPrace}{Semestrální práce}
+\newcommand{\Autor}{Vít Horčička}
+\newcommand{\Skolitel}{Gemini}
+\newcommand{\MestoRok}{České Budějovice 2026}
+
+\begin{document} % Začátek obsahu
+
+\input{titulka}
+
+\section{Úvod}
+Tato bakalářská práce se zabývá návrhem a implementací hlídacího systému pro kotelnu s využitím platformy Blynk. Cílem je vytvořit systém, který bude monitorovat teplotu, vlhkost, tlak a koncentrace špatných látek v kotelně a umožní uživateli vzdáleně sledovat tyto parametry a ovládat zařízení.
+
+\subsection{Chytrá domácnost}
+Chytrá domácnost, často označovaná anglickým termínem \textit{Smart Home}, představuje koncept moderního bydlení, kde jsou různá zařízení a systémy v domácnosti propojeny, automatizovány a ovládány centrálně nebo na dálku. Cílem je zvýšení komfortu, bezpečnosti, energetické účinnosti a celkové kvality života obyvatel \autocite{smart-home-book}.
+
+\subsubsection{Problematika krizového řížení}
+Kritické systémy jsou systémy, jejichž selhání může mít závažné důsledky, jako jsou ztráty na životech, finanční škody nebo poškození životního prostředí. Proto je řízení těchto systémů klíčové pro minimalizaci rizik a zajištění bezpečnosti. V kontextu monitorování kotelny je důležité zajistit, aby systém dokázal včas detekovat potenciální hrozby (např. přehřátí, únik plynu) a umožnil rychlou reakci.
+
+\begin{enumerate}
+    \item \textbf{Funkčnost:} Systém sám o sobě není kritický, ale jeho selhání může vést k nebezpečným situacím, jako je přehřátí kotle nebo únik plynu, což může ohrozit bezpečnost lidí a majetku.
+    \item \textbf{Spolehlivost:} Systém musí být navržen tak, aby minimalizoval riziko selhání a zajistil, že bude fungovat správně i v případě výpadku některých komponent.
+    \item \textbf{Bezpečnost:} Systém musí být zabezpečen proti neoprávněnému přístupu, aby se zabránilo potenciálním útokům, které by mohly ohrozit jeho funkčnost nebo bezpečnost. 
+    \item \textbf{Samostatnost:} Systém by měl být schopen fungovat nezávisle na externích službách, aby se minimalizovalo riziko výpadku v důsledku problémů s připojením k internetu nebo selháním cloudových služeb.
+\end{enumerate}
+
+\newpage
+
+\section{Systém monitorování kotelny}
+Pro monitorování prostředí v kotelně budou použity následující principy a technologie:
+\subsection{Laskakit ESP32}
+ESP32 je výkonný mikrokontrolér s integrovanou Wi-Fi a Bluetooth konektivitou, který je ideální pro IoT projekty. Jeho schopnost připojení k internetu umožňuje odesílání dat do cloudových služeb, jako je Blynk, a umožňuje vzdálené ovládání zařízení. ESP32 bude sloužit jako centrální jednotka pro sběr dat ze senzorů a komunikaci s platformou Blynk.
+\subsection{Komunikace}
+Pro komunikaci mezi senzory a ESP32 bude využit protokol I2C, který umožňuje připojení více zařízení na stejné sběrnici. Data ze senzorů budou pravidelně odesílána do platformy Blynk, kde budou zpracovávána a vizualizována pro uživatele.
+Pro komunikaci s platformou Blynk bude využit protokol MQTT, který je optimalizován pro nízkou latenci a nízkou spotřebu energie, což je ideální pro IoT zařízení. ESP32 bude fungovat jako MQTT klient, který bude odesílat data do Blynk serveru a přijímat příkazy od uživatele.
+\subsection{Senzory}
+\subsubsection{BME280}
+Senzor BME280 je integrovaný senzor od společnosti Bosch Sensortec, který dokáže měřit atmosférický tlak, relativní vlhkost a teplotu. Vyznačuje se vysokou přesností a nízkou spotřebou energie, což jej činí ideálním pro monitorovací aplikace. Data ze senzoru BME280 jsou klíčová pro sledování podmínek v kotelně a identifikaci potenciálních abnormalit.
+\subsubsection{MQ135}
+Senzor MQ135 je senzor kvality ovzduší, který je schopen detekovat širokou škálu plynů, včetně amoniaku, sirovodíku, benzenu, alkoholu, kouře a oxidu uhličitého. Jeho citlivost na tyto plyny umožňuje monitorovat znečištění vzduchu a přítomnost nebezpečkých látek v prostředí kotelny. Signál z MQ135 je důležitý pro posouzení celkové kvality ovzduší a včasné varování před rizikovými koncentracemi plynů.
+
+\section{Návrh zapojení a signalizace}
+Pro realizaci monitorovacího systému kotelny bude použito následující zapojení:
+\begin{figure}[H]
+    \centering
+    \input{diagramZapojeni.tex}
+    \caption{Diagram zapojení monitorovacího systému kotelny.}
+    \label{fig:flowchart}
+\end{figure}ESP32 bude připojen k senzoru BME280 pomocí I2C rozhraní a k senzoru MQ135 pomocí analogového vstupu. K signalizaci různých stavů systému budou použity LED diody.
+
+
+\subsection{Signalizace LED diod}
+Pro indikaci různých stavů systému budou použity LED diody s následujícími funkcemi:
+\begin{itemize}
+    \item \textbf{Zelená LED:} Indikuje normální provoz a bezpečné podmínky v kotelně.
+    \item \textbf{Žlutá LED:} Indikuje mírné odchylky od normálních podmínek, které mohou vyžadovat pozornost, například mírně zvýšenou teplotu nebo vlhkost.
+    \item \textbf{Červená LED:} Indikuje kritické podmínky, jako je přehřátí, únik plynu nebo vysoká koncentrace škodlivých látek, které vyžadují okamžitou reakci.
+\end{itemize}
+
+\section{Návrh funkčnosti}
+Systém bude v pravidelných intervalech sbírat data ze senzorů a kontrolovat je proti předem definovaným prahům. Pokud budou detekovány odchylky, systém bude aktualizovat stav LED diod a odesílat upozornění do platformy Blynk, kde bude uživatel informován o aktuálním stavu kotelny a případných rizicích.
+V určitých časových intervalech bude systém také odesílat data do Blynk pro dlouhodobé sledování a analýzu trendů, což umožní uživateli lépe porozumět podmínkám v kotelně a případně optimalizovat její provoz.
+
+\subsection{Diagram programu}
+Pro lepší pochopení logiky programu pro monitorovací systém kotelny je níže uveden diagram, který znázorňuje hlavní funkční bloky a jejich vzájemné interakce.
+\begin{figure}[H]
+    \centering
+    \input{flowdiagram}
+    \caption{Diagram programu pro monitorovací systém kotelny.}
+    \label{fig:flowchart}
+\end{figure}
+
+\subsection{Programový kód}
+Programový kód pro ESP32 bude napsán v jazyce C++ a bude využívat knihovny pro komunikaci s Blynk, I2C a analogové vstupy. Kód bude strukturován tak, aby byl snadno čitelný a udržovatelný, s jasně definovanými funkcemi pro sběr dat, kontrolu prahů, aktualizaci LED diod a komunikaci s platformou Blynk. Příklad ukazuje logiku posuzování dat ze senzorů a aktualizace stavu LED diod:
+\begin{lstlisting}
+#include <Wire.h>
+#include <BlynkSimpleEsp32.h>
+#include <Adafruit_BME280.h>
+\end{lstlisting}
+
+
+\section{Závěr}
+Monitorovací systém kotelny s využitím platformy Blynk představuje efektivní řešení pro sledování a řízení podmínek v kotelně. Díky integraci senzorů BME280 a MQ135, spolu s výkonným mikrokontrolérem ESP32, je systém schopen poskytovat uživatelům důležité informace o stavu kotelny a umožnit jim rychle reagovat na potenciální hrozby. Ačkoliv tento systém není kritickým systémem v pravém slova smyslu, aplikuje některé z principů řízení rizik a bezpečnosti, které jsou klíčové pro zajištění bezpečného a spolehlivého provozu v prostředí kotelny.
+
+\subsection{Nalezené problémy}
+Během vývoje systému byly identifikovány následující problémy:
+\begin{itemize}
+    \item \textbf{Omezená spolehlivost senzoru MQ135:} Tento senzor může být náchylný k falešným pozitivům a negativům, což může vést k nesprávným indikacím stavu vzduchu v kotelně.
+    \item \textbf{Závislost na připojení k internetu:} Systém je závislý na stabilním připojení k internetu pro komunikaci s platformou Blynk, což může být problém v případě výpadku sítě.
+    \item \textbf{Omezené možnosti rozšíření:} Systém je navržen pro konkrétní sadu senzorů a funkcí, což může omezit jeho schopnost přizpůsobit se budoucím potřebám nebo integraci s dalšími zařízeními v rámci chytré domácnosti.
+\end{itemize}
+
+\nocite{*}
+\newpage
+\printbibliography[heading=bibintoc,title={Seznam použité literatury}]
+
+
+\end{document} % Konec obsahu

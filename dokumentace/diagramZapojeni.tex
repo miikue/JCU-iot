@@ -1,0 +1,51 @@
+\begin{tikzpicture}
+	\draw[line width=1.5pt] (14.75, 11) to[led, fill=blue] (17, 11);
+	\draw[line width=1.5pt, blue] (16.2, 11) -- (17, 11);
+	
+	\draw[line width=1.5pt] (14.75, 9.5) to[led, fill=red] (17, 9.5);
+	\draw[line width=1.5pt, blue] (16.2, 9.5) -- (17, 9.5);
+	
+	\draw[line width=1.5pt] (14.75, 8) to[led, fill=green] (17, 8);
+	\draw[line width=1.5pt, blue] (16.2, 8) -- (17, 8);
+
+	\node[shape=rectangle, fill={rgb,255:red,179;green,179;blue,179}, draw, line width=1pt, minimum width=3.965cm, minimum height=4.965cm](N1) at (12, 9.5){} node[anchor=center] at (N1.text){$ESP 32 $};
+	\node[shape=rectangle, fill={rgb,255:red,179;green,179;blue,179}, draw, line width=1pt, minimum width=2.965cm, minimum height=1.965cm](N2) at (6.5, 11){} node[anchor=center] at (N2.text){$MQ135$};
+	\node[shape=rectangle, fill={rgb,255:red,179;green,179;blue,179}, draw, line width=1pt, minimum width=2.965cm, minimum height=1.965cm](N3) at (6.5, 8){} node[anchor=center] at (N3.text){$BME 280$};
+
+	\draw[line width=1.5pt, blue] (10.75, 12) -| (10.75, 12.5);
+	\draw[line width=1.5pt, blue] (10.75, 12.5) -- (6.5, 12.5) -| (6.5, 12);
+	\draw[line width=1.5pt, blue] (10.75, 12.5) -- (17, 12.5) -| (17, 8);
+	\draw[line width=1.5pt, blue] (5, 8) -- (4.5, 8) -- (4.5, 12.5) -- (6.5, 12.5);
+	
+	\draw[line width=1.5pt] (14.75, 11) -- (14, 11);
+	\draw[line width=1.5pt] (14.75, 9.5) -- (14, 9.5);
+	\draw[line width=1.5pt] (14.75, 8) -- (14, 8);
+	\draw[line width=1.5pt] (8, 11) -- (10, 11);
+	\draw[line width=1.5pt] (8, 8.5) -- (10, 8.5);
+	\draw[line width=1.5pt] (10, 7.5) -- (8, 7.5);
+	
+	\draw[line width=1.5pt, red] (6.5, 9) -- (6.5, 10);
+	\draw[line width=1.5pt, red] (6.5, 9.5) -- (10, 9.5);
+
+	\fill[blue] (10.75, 12.5) circle (3pt);
+	\fill[blue] (6.5, 12.5) circle (3pt);
+	\fill[blue] (17, 11) circle (3pt);
+	\fill[blue] (17, 9.5) circle (3pt);
+	\fill[red] (6.5, 9.5) circle (3pt);
+	
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (10.75, 11.75){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (10.75, 11.75){\tiny GND};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (6.5, 11.75){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (6.5, 11.75){\tiny GND};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (5.375, 8){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (5.375, 8){\tiny GND};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (10.375, 9.5){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (10.375, 9.5){\tiny 3V3};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (6.5, 8.75){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (6.5, 8.75){\tiny 3V3};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (6.5, 10.25){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (6.5, 10.25){\tiny 3V3};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (10.25, 11){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (10.25, 11){\tiny 6};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (7.3, 11){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (7.3, 11){\tiny AOUT};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (7.625, 8.5){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (7.625, 8.5){\tiny SDA};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (13.625, 8){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (13.625, 8){\tiny 35};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (10.375, 8.5){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (10.375, 8.5){\tiny SDA};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (7.625, 7.5){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (7.625, 7.5){\tiny SDC};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (10.375, 7.5){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (10.375, 7.5){\tiny SDC};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (13.625, 9.5){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (13.625, 9.5){\tiny 36};
+	\node[shape=rectangle, minimum width=0.715cm, minimum height=0.465cm] at (13.625, 11){} node[anchor=center, align=center, text width=0.327cm, inner sep=6pt] at (13.625, 11){\tiny 37};
+\end{tikzpicture}

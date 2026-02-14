@@ -1,0 +1,32 @@
+
+\begin{tikzpicture}
+    \node (start) [startstop] at (0, 8) {Start / Setup};
+    \node (initsens) [process] at (0, 6.5) {Inicializace Senzorů};
+    \node (initwifi) [process] at (0, 5) {Inicializace Wi-Fi};
+    
+    \node (read) [process] at (0, 2) {Čtení dat ze senzorů};
+    \node (verify) [decision] at (4.5, 2) {Ověření správnosti};
+    \node (alarm) [decision] at (9, 2) {Ověření podmínek};
+    
+    \node (blynkalarm) [process] at (6.75, 4.5) {Alarmování v Blynk};
+    
+    \node (blynk) [process] at (9, -1) {Odeslání dat na Blynk};
+    \node (wait) [process] at (0, -1) {Pauza před čtením};
+
+    \draw [arrow] (start) -- (initsens);
+    \draw [arrow] (initsens) -- (initwifi);
+    \draw [arrow] (initwifi) -- (read);
+
+    \draw [arrow] (read) -- (verify);
+    \draw [arrow] (verify) -- node[above] {\footnotesize OK} (alarm);
+    
+    \draw [arrow] (verify.north) |- node[near start, left] {\footnotesize Chyba} (blynkalarm.west);
+    \draw [arrow] (alarm.north) |- node[near start, right] {\footnotesize Poplach} (blynkalarm.east);
+    
+    \draw [arrow] (alarm.south) -- node[right] {\footnotesize Bez alarmu} (blynk.north);
+    
+    \draw [arrow] (blynk.west) -- (wait.east);
+    \draw [arrow] (wait.north) -- (read.south);
+    
+    \draw [arrow] (blynkalarm.north) |- (11.5, 5.5) |- (0, -2.5) -- (wait.south);
+\end{tikzpicture}
