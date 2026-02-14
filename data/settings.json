@@ -1,0 +1,7 @@
+{
+  "tempThreshold": 30.0,
+  "humThreshold": 60.0,
+  "pressThreshold": 1013.0,
+  "airQualityThreshold": 150.0,
+  "onOff": false
+}

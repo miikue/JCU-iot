@@ -10,3 +10,7 @@
 *.out
 *.toc
 .DS_Store
+test/
+include/
+lib/
+secrets.h
