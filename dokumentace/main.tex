@@ -1,4 +1,4 @@
-\documentclass[12pt, twoside]{report} % Definuje typ dokumentu (článek)
+\documentclass[12pt, twoside]{article} % Definuje typ dokumentu (článek)
 \usepackage[
     inner=3cm,      % Okraj u hřbetu (vnitřní)
     outer=2.2cm,    % Vnější okraj
@@ -46,55 +46,102 @@
 \newcommand{\NazevPrace}{Hlídací systém kotelny s využítím platformy Blynk}
 \newcommand{\TypPrace}{Semestrální práce}
 \newcommand{\Autor}{Vít Horčička}
-\newcommand{\Skolitel}{Gemini}
+
 \newcommand{\MestoRok}{České Budějovice 2026}
 
 \begin{document} % Začátek obsahu
 
 \input{titulka}
 
+\newpage
+\tableofcontents
+\newpage
+
+\section*{Seznam zkratek}
+\addcontentsline{toc}{section}{Seznam zkratek} % Add to table of contents
+\begin{itemize}
+    \item IoT - Internet of Things (Internet věcí)
+    \item ESP32 - Expressif Systems 32 (Mikrokontrolér)
+    \item I2C - Inter-Integrated Circuit (Komunikační protokol)
+    \item MQTT - Message Queuing Telemetry Transport (Komunikační protokol)
+    \item LED - Light Emitting Diode (Světlo emitující dioda)
+    \item GND - Ground (Zem)
+    \item 3V3 - 3.3 Volts (Napájecí napětí)
+    \item VCC, VIN - Voltage Common Collector (Napájecí napětí)
+    \item Wi-Fi - Wireless Fidelity (Bezdrátová technologie)
+    \item API - Application Programming Interface (Rozhraní pro programování aplikací)
+\end{itemize}
+\newpage
+
 \section{Úvod}
-Tato bakalářská práce se zabývá návrhem a implementací hlídacího systému pro kotelnu s využitím platformy Blynk. Cílem je vytvořit systém, který bude monitorovat teplotu, vlhkost, tlak a koncentrace špatných látek v kotelně a umožní uživateli vzdáleně sledovat tyto parametry a ovládat zařízení.
+Tato semestrální práce se zabývá návrhem a implementací hlídacího systému pro kotelnu s využitím platformy Blynk. V kontextu moderních chytrých domácností je automatizované monitorování a řízení klíčových systémů, jako je vytápění, nejen otázkou komfortu, ale především bezpečnosti a efektivity. Cílem této práce je vytvořit cenově dostupný a spolehlivý systém, který bude v reálném čase sledovat kritické parametry v kotelně – konkrétně teplotu, vlhkost, tlak a přítomnost nebezpečných plynů.
+
+Práce je strukturována následovně: nejprve je představen koncept chytré domácnosti a problematika spojená s monitorováním kritických systémů. Následně je popsán hardware, včetně mikrokontroleru ESP32 a senzorů BME280 a MQ135, a softwarové řešení postavené na platformě Blynk. Další kapitoly se věnují detailnímu návrhu zapojení, signalizačním mechanismům a softwarové logice. V závěru jsou shrnuty dosažené výsledky, diskutovány nalezené problémy a navrženy možnosti dalšího rozšíření.
+
+Výsledný systém umožní uživateli vzdáleně sledovat stav kotelny prostřednictvím mobilní aplikace, přijímat okamžitá varování v případě anomálií a mít tak neustálý přehled o bezpečnosti a funkčnosti vytápěcího systému.
+
+\subsection{Internet věcí (IoT)}
+Internet věcí (IoT) představuje rozsáhlou síť fyzických zařízení, vozidel, domácích spotřebičů a dalších předmětů, které jsou vybaveny senzory, softwarem a dalšími technologiemi umožňujícími připojení a výměnu dat s jinými zařízeními a systémy přes internet. Tato konektivita umožňuje vzdálený monitoring, sběr dat, analýzu a automatizaci procesů v reálném čase. Cílem IoT je zvýšit efektivitu, přesnost a ekonomický přínos v široké škále aplikací, od průmyslových systémů přes chytrá města až po osobní zařízení a domácnosti. V kontextu monitorovacích systémů, jako je ten v této práci, IoT poskytuje základní infrastrukturu pro sběr dat z fyzického světa a jejich zpřístupnění pro analýzu a akci. \autocite{wiki:iot}
 
 \subsection{Chytrá domácnost}
-Chytrá domácnost, často označovaná anglickým termínem \textit{Smart Home}, představuje koncept moderního bydlení, kde jsou různá zařízení a systémy v domácnosti propojeny, automatizovány a ovládány centrálně nebo na dálku. Cílem je zvýšení komfortu, bezpečnosti, energetické účinnosti a celkové kvality života obyvatel \autocite{smart-home-book}.
+Chytrá domácnost, známá také jako inteligentní dům, je koncept bydlení, který zajišťuje optimální vnitřní prostředí pro život obyvatel. Toho je dosaženo souhrou stavební konstrukce, technologií, automatizovaného řízení a služeb. Cílem je zvýšit komfort, zlepšit zábavu, zajistit bezpečnost a snížit provozní náklady. Systém je obvykle modulární a jeho centrální jednotka automatizuje operace jako vytápění, osvětlení, zabezpečení a zábavu, přičemž vše je ovladatelné prostřednictvím různých rozhraní \autocite{wiki:inteligentni_dum}.
 
-\subsubsection{Problematika krizového řížení}
-Kritické systémy jsou systémy, jejichž selhání může mít závažné důsledky, jako jsou ztráty na životech, finanční škody nebo poškození životního prostředí. Proto je řízení těchto systémů klíčové pro minimalizaci rizik a zajištění bezpečnosti. V kontextu monitorování kotelny je důležité zajistit, aby systém dokázal včas detekovat potenciální hrozby (např. přehřátí, únik plynu) a umožnil rychlou reakci.
+\subsection{Problematika spolehlivosti a řízení rizik}
+Při návrhu jakéhokoliv technického systému, jehož selhání může způsobit materiální škody nebo ohrozit zdraví, je nutné zohlednit principy řízení rizik. Cílem je identifikovat potenciální hrozby, analyzovat jejich pravděpodobnost a dopad a navrhnout opatření k jejich minimalizaci. Klíčovými pojmy jsou zde \textbf{spolehlivost} (schopnost systému plnit požadovanou funkci po danou dobu), \textbf{bezpečnost} (schopnost systému nezpůsobit nepřijatelné riziko) a \textbf{dostupnost} (pravděpodobnost, že systém bude v daném čase funkční). Ačkoliv monitorovací systém kotelny není formálně klasifikován jako kritický, aplikujeme tyto principy pro zajištění jeho robustnosti.
 
-\begin{enumerate}
-    \item \textbf{Funkčnost:} Systém sám o sobě není kritický, ale jeho selhání může vést k nebezpečným situacím, jako je přehřátí kotle nebo únik plynu, což může ohrozit bezpečnost lidí a majetku.
-    \item \textbf{Spolehlivost:} Systém musí být navržen tak, aby minimalizoval riziko selhání a zajistil, že bude fungovat správně i v případě výpadku některých komponent.
-    \item \textbf{Bezpečnost:} Systém musí být zabezpečen proti neoprávněnému přístupu, aby se zabránilo potenciálním útokům, které by mohly ohrozit jeho funkčnost nebo bezpečnost. 
-    \item \textbf{Samostatnost:} Systém by měl být schopen fungovat nezávisle na externích službách, aby se minimalizovalo riziko výpadku v důsledku problémů s připojením k internetu nebo selháním cloudových služeb.
-\end{enumerate}
+\subsubsection{Specifika IoT a závislost na cloudu}
+U systémů spadajících do kategorie Internetu věcí (IoT) vstupuje do hry specifický rizikový faktor: závislost na externích službách a konektivitě. Využití cloudové platformy, jako je Blynk, přináší řadu výhod, ale také významná rizika, která je třeba řídit.
+
+\paragraph*{Výhody cloudového řešení}
+\begin{itemize}
+    \item \textbf{Vzdálený přístup:} Uživatel může kdykoliv a odkudkoliv kontrolovat stav kotelny prostřednictvím mobilní aplikace.
+    \item \textbf{Okamžité notifikace:} V případě detekce anomálie (např. únik plynu) systém okamžitě odešle varování na mobilní zařízení uživatele, což umožňuje rychlou reakci.
+    \item \textbf{Vizualizace a historie dat:} Cloudová platforma umožňuje přehledné zobrazení aktuálních i historických dat v grafech, což usnadňuje sledování trendů a diagnostiku problémů.
+    \item \textbf{Jednoduchost implementace:} Hotová platforma výrazně zjednodušuje vývoj, protože není nutné programovat vlastní serverovou a mobilní aplikaci.
+\end{itemize}
+
+\paragraph*{Nevýhody a rizika}
+\begin{itemize}
+    \item \textbf{Závislost na připojení k internetu:} Celá vzdálená funkčnost je závislá na stabilním internetovém připojení jak v místě instalace, tak na straně uživatele. Při výpadku se ztrácí možnost monitorování a přijímání notifikací.
+    \item \textbf{Závislost na třetí straně:} Systém je závislý na dostupnosti a podpoře služby Blynk. Pokud má poskytovatel technický výpadek nebo službu v budoucnu ukončí, systém ztratí svou klíčovou funkcionalitu.
+    \item \textbf{Potřeba lokální autonomie:} Z výše uvedených důvodů je nezbytné, aby zařízení mělo základní autonomní funkce. V této práci je to řešeno lokální optickou signalizací (LED diody), která varuje osoby v bezprostřední blízkosti zařízení i bez funkčního připojení k cloudu.
+    \item \textbf{Bezpečnostní rizika:} Připojení k internetu otevírá systém potenciálním kybernetickým útokům. Je nutné dbát na silné zabezpečení sítě a přístupových údajů k platformě.
+\end{itemize}
 
 \newpage
 
 \section{Systém monitorování kotelny}
 Pro monitorování prostředí v kotelně budou použity následující principy a technologie:
 \subsection{Laskakit ESP32}
-ESP32 je výkonný mikrokontrolér s integrovanou Wi-Fi a Bluetooth konektivitou, který je ideální pro IoT projekty. Jeho schopnost připojení k internetu umožňuje odesílání dat do cloudových služeb, jako je Blynk, a umožňuje vzdálené ovládání zařízení. ESP32 bude sloužit jako centrální jednotka pro sběr dat ze senzorů a komunikaci s platformou Blynk.
+ESP32 je výkonný mikrokontrolér s integrovanou Wi-Fi a Bluetooth konektivitou, který je ideální pro IoT projekty. Jeho schopnost připojení k internetu umožňuje odesílání dat do cloudových služeb, jako je Blynk, a umožňuje vzdálené ovládání zařízení. ESP32 bude sloužit jako centrální jednotka pro sběr dat ze senzorů a komunikaci s platformou Blynk. \autocite{laskakit_esp32}
 \subsection{Komunikace}
 Pro komunikaci mezi senzory a ESP32 bude využit protokol I2C, který umožňuje připojení více zařízení na stejné sběrnici. Data ze senzorů budou pravidelně odesílána do platformy Blynk, kde budou zpracovávána a vizualizována pro uživatele.
-Pro komunikaci s platformou Blynk bude využit protokol MQTT, který je optimalizován pro nízkou latenci a nízkou spotřebu energie, což je ideální pro IoT zařízení. ESP32 bude fungovat jako MQTT klient, který bude odesílat data do Blynk serveru a přijímat příkazy od uživatele.
+Pro komunikaci s platformou Blynk bude využit protokol MQTT, který je optimalizován pro nízkou latenci a nízkou spotřebu energie, což je ideální pro IoT zařízení. ESP32 bude fungovat jako MQTT klient, který bude odesílat data do Blynk serveru a přijímat příkazy od uživatele. \autocite{blynk_docs}
 \subsection{Senzory}
 \subsubsection{BME280}
 Senzor BME280 je integrovaný senzor od společnosti Bosch Sensortec, který dokáže měřit atmosférický tlak, relativní vlhkost a teplotu. Vyznačuje se vysokou přesností a nízkou spotřebou energie, což jej činí ideálním pro monitorovací aplikace. Data ze senzoru BME280 jsou klíčová pro sledování podmínek v kotelně a identifikaci potenciálních abnormalit.
 \subsubsection{MQ135}
-Senzor MQ135 je senzor kvality ovzduší, který je schopen detekovat širokou škálu plynů, včetně amoniaku, sirovodíku, benzenu, alkoholu, kouře a oxidu uhličitého. Jeho citlivost na tyto plyny umožňuje monitorovat znečištění vzduchu a přítomnost nebezpečkých látek v prostředí kotelny. Signál z MQ135 je důležitý pro posouzení celkové kvality ovzduší a včasné varování před rizikovými koncentracemi plynů.
+Senzor MQ135 je senzor kvality ovzduší, který je schopen detekovat širokou škálu plynů, včetně amoniaku, sirovodíku, benzenu, alkoholu, kouře a oxidu uhličitého. Jeho citlivost na tyto plyny umožňuje monitorovat znečištění vzduchu a přítomnost nebezpečkých látek v prostředí kotelny. Signál z MQ135 je důležitý pro posouzení celkové kvality ovzduší a včasné varování před rizikovými koncentracemi plynů. \autocite{dratek_mq135}
+
+\subsection{Komponenty}
+\subsubsection{Nepájivé pole (Breadboard)}
+Pro snadné a rychlé prototypování bez nutnosti pájení je použit breadboard. Umožňuje flexibilní propojování jednotlivých komponent, jako jsou senzory a LED diody, s mikrokontrolérem ESP32.
+
+\subsubsection{LED diody}
+V projektu jsou použity tři LED diody různých barev (zelená, žlutá, červená) pro vizuální signalizaci stavu systému. Jejich specifické funkce pro indikaci normálního provozu, varování a kritických stavů jsou popsány v kapitole \ref{sec:signalizace_led}.
 
 \section{Návrh zapojení a signalizace}
 Pro realizaci monitorovacího systému kotelny bude použito následující zapojení:
 \begin{figure}[H]
     \centering
     \input{diagramZapojeni.tex}
-    \caption{Diagram zapojení monitorovacího systému kotelny.}
+    \caption{Diagram zapojení monitorovacího systému kotelny. Vytvořeno pomocí \autocite{circuit2tikz_designer}}
     \label{fig:flowchart}
 \end{figure}ESP32 bude připojen k senzoru BME280 pomocí I2C rozhraní a k senzoru MQ135 pomocí analogového vstupu. K signalizaci různých stavů systému budou použity LED diody.
 
 
 \subsection{Signalizace LED diod}
+\label{sec:signalizace_led}
 Pro indikaci různých stavů systému budou použity LED diody s následujícími funkcemi:
 \begin{itemize}
     \item \textbf{Zelená LED:} Indikuje normální provoz a bezpečné podmínky v kotelně.
@@ -112,7 +159,6 @@ Pro lepší pochopení logiky programu pro monitorovací systém kotelny je ní�
     \centering
     \input{flowdiagram}
     \caption{Diagram programu pro monitorovací systém kotelny.}
-    \label{fig:flowchart}
 \end{figure}
 
 \subsection{Programový kód}
