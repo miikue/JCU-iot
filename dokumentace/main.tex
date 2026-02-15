@@ -115,7 +115,7 @@ Pro monitorování prostředí v kotelně budou použity následující principy
 \subsection{Laskakit ESP32}
 ESP32 je výkonný mikrokontrolér s integrovanou Wi-Fi a Bluetooth konektivitou, který je ideální pro IoT projekty. Jeho schopnost připojení k internetu umožňuje odesílání dat do cloudových služeb, jako je Blynk, a umožňuje vzdálené ovládání zařízení. ESP32 bude sloužit jako centrální jednotka pro sběr dat ze senzorů a komunikaci s platformou Blynk. \autocite{laskakit_esp32}
 \subsection{Komunikace}
-Pro komunikaci mezi senzory a ESP32 bude využit protokol I2C, který umožňuje připojení více zařízení na stejné sběrnici. Data ze senzorů budou pravidelně odesílána do platformy Blynk, kde budou zpracovávána a vizualizována pro uživatele.
+Pro komunikaci mezi senzory a ESP32 bude využit protokol I2C, který umožňuje připojení více zařízení na stejné sběrnici. Konkrétně je I2C komunikace realizována pomocí Hupšup konektoru od LáskaKit, což zjednodušuje zapojení. Data ze senzorů budou pravidelně odesílána do platformy Blynk, kde budou zpracovávána a vizualizována pro uživatele.
 Pro komunikaci s platformou Blynk bude využit protokol MQTT, který je optimalizován pro nízkou latenci a nízkou spotřebu energie, což je ideální pro IoT zařízení. ESP32 bude fungovat jako MQTT klient, který bude odesílat data do Blynk serveru a přijímat příkazy od uživatele. \autocite{blynk_docs}
 \subsection{Senzory}
 \subsubsection{BME280}
@@ -130,6 +130,21 @@ Pro snadné a rychlé prototypování bez nutnosti pájení je použit breadboar
 \subsubsection{LED diody}
 V projektu jsou použity tři LED diody různých barev (zelená, žlutá, červená) pro vizuální signalizaci stavu systému. Jejich specifické funkce pro indikaci normálního provozu, varování a kritických stavů jsou popsány v kapitole \ref{sec:signalizace_led}.
 
+\subsection{Software}
+\subsubsection{Visual Studio Code}
+Jako vývojové prostředí pro psaní kódu byl použit edit Visual Studio Code, který poskytuje širokou škálu rozšíření pro vývoj v jazyce C++ a práci s mikrokontroléry.
+
+\subsubsection{PlatformIO}
+PlatformIO je open-source ekosystém pro vývoj IoT projektů. Bylo použito jako rozšíření pro Visual Studio Code pro správu knihoven, kompilaci kódu a nahrávání firmwaru do mikrokontroléru ESP32.
+
+\subsubsection{C++ a knihovna Wire}
+Program pro ESP32 je napsán v jazyce C++. Pro komunikaci se senzory přes sběrnici I2C je využita standardní knihovna \texttt{Wire}.
+
+\subsubsection{Platforma Blynk}
+Pro vizualizaci dat a zasílání notifikací je využita platforma Blynk. Komunikace probíhá pomocí knihovny pr ESP32, která zjednodušuje připojení k serveru Blynk a výměnu dat.
+
+
+
 \section{Návrh zapojení a signalizace}
 Pro realizaci monitorovacího systému kotelny bude použito následující zapojení:
 \begin{figure}[H]
@@ -137,7 +152,7 @@ Pro realizaci monitorovacího systému kotelny bude použito následující zapo
     \input{diagramZapojeni.tex}
     \caption{Diagram zapojení monitorovacího systému kotelny. Vytvořeno pomocí \autocite{circuit2tikz_designer}}
     \label{fig:flowchart}
-\end{figure}ESP32 bude připojen k senzoru BME280 pomocí I2C rozhraní a k senzoru MQ135 pomocí analogového vstupu. K signalizaci různých stavů systému budou použity LED diody.
+\end{figure}ESP32 bude připojen k senzoru BME280 pomocí I2C rozhraní a k senzoru MQ135 pomocí analogového vstupu. Napájení celého systému je zajištěno přes USB port mikrokontroléru ESP32, což umožňuje flexibilní a snadné napojení. Pro vizuální signalizaci různých stavů systému budou použity LED diody. Detailní rozvržení zapojení, včetně pinů a propojení jednotlivých komponent, je znázorněno v přiloženém diagramu.
 
 
 \subsection{Signalizace LED diod}
