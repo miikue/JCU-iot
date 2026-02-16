@@ -36,6 +36,12 @@ float airQualityThreshold = 150.0;
 bool onOff = false;
 bool alarmTriggered = false;
 
+// Prahové změny pro odesílaní dat
+#define TEMP_CHANGE_THRESHOLD 0.5
+#define HUM_CHANGE_THRESHOLD 1.0
+#define PRESS_CHANGE_THRESHOLD 1.0
+#define AIR_QUALITY_CHANGE_THRESHOLD 10.0
+
 // LED indikátory
 bool ledOk = false;
 bool ledError = false;
@@ -47,10 +53,6 @@ bool ledStatus = false;
 // Senzory
 MQ135 gasSensor = MQ135(6); // GPIO 6
 Adafruit_BME280 bme;
-
-
-
-
 
 // Buffer pro klouzavý průměr (pro MQ135)
 const int MA_SAMPLES = 10;
@@ -78,6 +80,28 @@ void printSensorData() {
 }
 
 
+// Kontrola prahových hodnot a alarmu
+void checkThresholds() {
+  bool currentOk = temp < tempThreshold && hum < humThreshold && press < pressThreshold && airQuality < airQualityThreshold;
+  
+  if (currentOk != ledOk || !alarmTriggered) { 
+    ledOk = currentOk;
+    ledError = !ledOk;
+    
+    if (!ledOk && !alarmTriggered) {
+      alarmTriggered = true;
+      Serial.println("\n[!!! ALARM !!!] Hodnoty prekrocily prah!");
+      Blynk.virtualWrite(V10, "ALARM");
+      Blynk.logEvent("alarm_event", "Alarm spusten!");
+    } else if (ledOk && alarmTriggered) {
+      alarmTriggered = false;
+      Serial.println("\n[OK] Hodnoty se vratily pod prah. Alarm zrusen.");
+      Blynk.virtualWrite(V10, "OK");
+      Blynk.logEvent("ok_event", "Hodnoty v norme");
+    }
+  }
+}
+
 // Čtení hodnot ze senzorů
 void readSensors() {
   temp = bme.readTemperature();
@@ -87,18 +111,6 @@ void readSensors() {
   printSensorData();
 }
 
-
-// Aktualizace posledních hodnot
-void updateLastValues() {
-  lastTemp = temp;
-  lastHum = hum;
-  lastPress = press;
-  lastAirQuality = airQuality;
-}
-
-
-
-
 // Nastavení LED indikátorů
 void updateLEDs() {
   digitalWrite(LED_OK_PIN, ledOk ? HIGH : LOW);
@@ -107,12 +119,36 @@ void updateLEDs() {
 }
 
 
-// Odesílání hodnot senzorů do Blynk
-void sendSensorDataBlynk() {
-  Blynk.virtualWrite(V0, temp);
-  Blynk.virtualWrite(V1, hum);
-  Blynk.virtualWrite(V2, press);
-  Blynk.virtualWrite(V3, airQuality);
+
+// Odesílání hodnot senzorů do Blynk pouze při významné změně nebo vynuceně
+unsigned long lastForcedSend = 0;
+const unsigned long FORCE_SEND_INTERVAL = 15UL * 60UL * 1000UL; // 15 minut v ms
+
+void sendSensorDataBlynk(bool force = false) {
+  bool sendTemp = force || fabs(temp - lastTemp) >= TEMP_CHANGE_THRESHOLD;
+  bool sendHum = force || fabs(hum - lastHum) >= HUM_CHANGE_THRESHOLD;
+  bool sendPress = force || fabs(press - lastPress) >= PRESS_CHANGE_THRESHOLD;
+  bool sendAirQuality = force || fabs(airQuality - lastAirQuality) >= AIR_QUALITY_CHANGE_THRESHOLD;
+
+  if (sendTemp) {
+    Blynk.virtualWrite(V0, temp);
+    lastTemp = temp;
+  }
+  if (sendHum) {
+    Blynk.virtualWrite(V1, hum);
+    lastHum = hum;
+  }
+  if (sendPress) {
+    Blynk.virtualWrite(V2, press);
+    lastPress = press;
+  }
+  if (sendAirQuality) {
+    Blynk.virtualWrite(V3, airQuality);
+    lastAirQuality = airQuality;
+  }
+  if (force) {
+    lastForcedSend = millis();
+  }
 }
 
 
@@ -120,32 +156,45 @@ void sendSensorDataBlynk() {
 // Blynk: změna prahových hodnot a zapnutí/vypnutí regulace
 BLYNK_WRITE(V5) {
   tempThreshold = param.asFloat();
-  Serial.printf("Nastavená prahová teplota: %.2f °C\n", tempThreshold);
+  Serial.println("\n=========================================");
+  Serial.printf(">>> ZMĚNA PRAHU: TEPLOTA = %.2f °C <<<\n", tempThreshold);
+  Serial.println("=========================================\n");
   saveSettings();
 }
+
 BLYNK_WRITE(V6) {
   humThreshold = param.asFloat();
-  Serial.printf("Nastavená prahová vlhkost: %.2f %%\n", humThreshold);
+  Serial.println("\n=========================================");
+  Serial.printf(">>> ZMĚNA PRAHU: VLHKOST = %.2f %% <<<\n", humThreshold);
+  Serial.println("=========================================\n");
   saveSettings();
 }
+
 BLYNK_WRITE(V7) {
   pressThreshold = param.asFloat();
-  Serial.printf("Nastavený prahový tlak: %.2f hPa\n", pressThreshold);
+  Serial.println("\n=========================================");
+  Serial.printf(">>> ZMĚNA PRAHU: TLAK = %.2f hPa <<<\n", pressThreshold);
+  Serial.println("=========================================\n");
   saveSettings();
 }
+
 BLYNK_WRITE(V8) {
   airQualityThreshold = param.asFloat();
-  Serial.printf("Nastavená prahová kvalita vzduchu: %.2f ppm\n", airQualityThreshold);
+  Serial.println("\n=========================================");
+  Serial.printf(">>> ZMĚNA PRAHU: VZDUCH = %.2f ppm <<<\n", airQualityThreshold);
+  Serial.println("=========================================\n");
   saveSettings();
 }
+
 BLYNK_WRITE(V9) {
   onOff = param.asInt() == 1;
-  Serial.printf("Regulace je  %s\n", onOff ? "zapnutá" : "vypnutá");
+  Serial.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+  Serial.printf("!!! REGULACE JE NYNÍ %s !!!\n", onOff ? "ZAPNUTÁ (ON)" : "VYPNUTÁ (OFF)");
+  Serial.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   ledOk = onOff ? true : false;
   updateLEDs();
   saveSettings();
 }
-
 
 // Odeslání aktuálních nastavení do Blynk
 void sendSettingsToBlynk() {
@@ -154,6 +203,22 @@ void sendSettingsToBlynk() {
   Blynk.virtualWrite(V7, pressThreshold);
   Blynk.virtualWrite(V8, airQualityThreshold);
   Blynk.virtualWrite(V9, onOff);
+}
+
+// Funkce pro periodickou kontrolu senzorů a aktualizaci stavu LED a odesílání dat do Blynk
+void oneSecondTask() {
+  readSensors();
+  ledStatus = !ledStatus;
+
+  if (onOff) {
+    checkThresholds();
+  } else {
+    ledOk = false;
+    ledError = false;
+  }
+
+  updateLEDs();
+  sendSensorDataBlynk(false);
 }
 
 
@@ -186,7 +251,7 @@ void setup() {
   bme.begin(0x77);
 
   // Kalibrace MQ135 v čistém vzduchu
-  Serial.println("Heating MQ135 for 20 seconds...");
+  Serial.println("Heating MQ135 for 10 seconds...");
   for(int i = 10; i > 0; i--) {
     Serial.print("Heating... ");
     Serial.println(i);
@@ -196,7 +261,7 @@ void setup() {
     updateLEDs();
     delay(1000);
   }
-  Serial.println("Evrything is ready!");
+  Serial.println("Everything is ready!");
   Serial.println("------------------------");
   ledOk = false;
   ledError = false;
@@ -213,45 +278,30 @@ void setup() {
   // Odeslání aktuálních nastavení do Blynk
   sendSettingsToBlynk();
 
-  // Časovač pro odesílání dat každých 10 minut
-  timer.setInterval(600000L, sendSensorDataBlynk);
+  // První načtení hodnot a inicializace last* proměnných
+  readSensors();
+  lastTemp = temp;
+  lastHum = hum;
+  lastPress = press;
+  lastAirQuality = airQuality;
+
+  // Vynucené odeslání dat při startu
+  sendSensorDataBlynk(true);
+  lastForcedSend = millis();
+
+  // Časovač pro kontrolu změn každých 10 minut (pouze změny)
+  timer.setInterval(1000L, oneSecondTask);
+  timer.setInterval(900000L, []() { sendSensorDataBlynk(true); });
 }
 
 
 
-
-// Kontrola prahových hodnot a alarmu
-void checkThresholds() {
-  ledOk = temp < tempThreshold && hum < humThreshold && press < pressThreshold && airQuality < airQualityThreshold;
-  ledError = !ledOk;
-  if (!ledOk && !alarmTriggered) {
-    Serial.println("Alarm! Hodnota překročila nastavený práh!");
-    alarmTriggered = true;
-  } else if (ledOk && alarmTriggered) {
-    Serial.println("Hodnota se vrátila pod práh, alarm zrušen.");
-    alarmTriggered = false;
-  }
-  Blynk.virtualWrite(V10, ledOk ? "OK" : "ALARM");
-}
 
 
 // -----------------------------
 // Hlavní smyčka programu
 // -----------------------------
 void loop() {
-  readSensors();
-  ledStatus = !ledStatus;
-
-  if (onOff) {
-    checkThresholds();
-    ledOk = true;
-  } else {
-    ledOk = false;
-    Serial.println("Regulace je vypnutá, všechny LED jsou OFF");
-  }
-
-  updateLEDs();
   Blynk.run();
   timer.run();
-  delay(1000);
 }
