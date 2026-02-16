@@ -5,10 +5,6 @@
 // Cesta k souboru s nastavením
 const char* SETTINGS_FILE = "/settings.json";
 
-// Globální proměnné jsou definovány v main.cpp a deklarovány jako extern v settings_manager.h
-// Zde se k nim přistupuje přes deklaraci v hlavičkovém souboru.
-
-
 void loadSettings() {
     Serial.println("Inicializuji LittleFS...");
     if (!LittleFS.begin()) {
