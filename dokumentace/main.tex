@@ -19,7 +19,7 @@
     decision/.style = {diamond, minimum width=2.8cm, minimum height=1cm, text centered, draw=black, fill=yellow!30, text width=2cm, inner sep=0pt},
     arrow/.style = {thick, ->, >=stealth}
 }
-\usepackage{mathptmx}
+\usepackage{lmodern}
 \usepackage{setspace}
 \onehalfspacing
 \usepackage{microtype}
@@ -259,8 +259,88 @@ Nakonec se provede první měření, jehož výsledky se ihned odešlou do aplik
 \end{lstlisting}
 
 \subsubsection{Popis loopu}
+Hlavní smyčka programu, \texttt{loop()}, je záměrně minimalistická. Její jedinou starostí je pravidelně volat dvě funkce:
+\begin{itemize}
+    \item \texttt{Blynk.run()}: Tato funkce zajišťuje veškerou komunikaci s platformou Blynk na pozadí. Zpracovává příchozí data (např. změny nastavení z aplikace) a odchozí data (hodnoty senzorů). Musí být volána co nejčastěji, aby byla zajištěna plynulá konektivita.
+    \item \texttt{timer.run()}: Spravuje a spouští naplánované úlohy definované pomocí knihovny \texttt{BlynkTimer}. V našem případě se stará o periodické spouštění funkce \texttt{oneSecondTask} a patnáctiminutovou synchronizaci.
+\end{itemize}
+Díky tomuto přístupu je hlavní smyčka přehledná a veškerá logika je zapouzdřena v časovaných funkcích, což zjednodušuje údržbu kódu.
+\begin{lstlisting}
+void loop() {
+  Blynk.run();
+  timer.run();
+}
+\end{lstlisting}
+
 \subsubsection{Popis hlídání podmínek}
+Funkce \texttt{checkThresholds()} je klíčovou součástí logiky pro hlídání bezpečnosti. Jejím úkolem je porovnat aktuálně naměřené hodnoty ze senzorů s prahovými hodnotami nastavenými uživatelem.
+
+Nejprve se vyhodnotí celkový stav. Podmínka \texttt{currentOk} je pravdivá pouze tehdy, pokud jsou všechny čtyři měřené hodnoty (teplota, vlhkost, tlak a kvalita vzduchu) pod svými příslušnými prahy.
+
+Následně funkce řeší logiku signalizace a alarmu.
+\begin{itemize}
+    \item Pokud se stav změnil z \textit{OK} na \textit{ne-OK}, spustí se alarm. To zahrnuje nastavení příznaků pro rozsvícení červené LED, odeslání notifikace a události do platformy Blynk a výpis do sériové konzole. Příznak \texttt{alarmTriggered} zajistí, že se alarm spustí pouze jednou a nebude opakovaně posílat notifikace.
+    \item Pokud se stav naopak vrátí z alarmujícího stavu zpět do normálu, alarm se zruší, zelená LED se rozsvítí a do Blynku se odešle zpráva o normalizaci stavu.
+\end{itemize}
+Tato logika zajišťuje, že uživatel je informován pouze o skutečných změnách stavu a není zahlcen zbytečnými zprávami.
+\begin{lstlisting}
+// Kontrola prahovych hodnot a alarmu
+void checkThresholds() {
+  bool currentOk = temp < tempThreshold && hum < humThreshold && press < pressThreshold && airQuality < airQualityThreshold;
+  
+  if (currentOk != ledOk || !alarmTriggered) { 
+    ledOk = currentOk;
+    ledError = !ledOk;
+    
+    if (!ledOk && !alarmTriggered) {
+      alarmTriggered = true;
+      Serial.println("\n[!!! ALARM !!!] Hodnoty prekrocily prah!");
+      Blynk.virtualWrite(V10, "ALARM");
+      Blynk.logEvent("alarm_event", "Alarm spusten!");
+    } else if (ledOk && alarmTriggered) {
+      alarmTriggered = false;
+      Serial.println("\n[OK] Hodnoty se vratily pod prah. Alarm zrusen.");
+      Blynk.virtualWrite(V10, "OK");
+      Blynk.logEvent("ok_event", "Hodnoty v norme");
+    }
+  }
+}
+\end{lstlisting}
 \subsubsection{Komunikace s platformou Blynk}
+Komunikace s platformou Blynk je stěžejním prvkem celého systému a je realizována pomocí knihovny \texttt{BlynkSimpleEsp32.h}. Tato knihovna abstrahuje složitost MQTT protokolu a umožňuje jednoduchou výměnu dat pomocí konceptu virtuálních pinů. Virtuální piny slouží jako most mezi hardwarem a widgety v mobilní aplikaci.
+
+\paragraph{Odesílání dat ze zařízení}
+Data jsou ze zařízení do aplikace posílána pomocí funkce \texttt{Blynk.virtualWrite(pin, hodnota)}. Pro úsporu datového toku a snížení zátěže sítě se data senzorů neposílají v každém cyklu, ale pouze pokud dojde k významné změně od poslední odeslané hodnoty, nebo pokud je vynuceno periodickým časovačem (každých 15 minut). Tuto logiku zajišťuje funkce \texttt{sendSensorDataBlynk()}.
+\begin{lstlisting}
+// Odesilani hodnot senzoru do Blynk pouze pri vyznamne zmene
+void sendSensorDataBlynk(bool force = false) {
+  bool sendTemp = force || fabs(temp - lastTemp) >= TEMP_CHANGE_THRESHOLD;
+  // ... similar checks for other sensors ...
+
+  if (sendTemp) {
+    Blynk.virtualWrite(V0, temp);
+    lastTemp = temp;
+  }
+  // ...
+}
+\end{lstlisting}
+Kromě telemetrických dat zařízení také posílá notifikace o alarmech pomocí funkce \texttt{Blynk.logEvent()}, která zaznamená událost do časové osy v aplikaci.
+
+\paragraph{Příjem dat z aplikace}
+Uživatelské rozhraní v aplikaci Blynk umožňuje měnit nastavení zařízení, jako jsou prahové hodnoty pro alarmy nebo zapnutí a vypnutí celého systému. Změna hodnoty widgetu v aplikaci vyvolá na straně ESP32 speciální funkci definovanou makrem \texttt{BLYNK\_WRITE(pin)}. Pro každý ovladatelný virtuální pin (`V5` až `V9`) existuje jedna taková funkce, která přijme novou hodnotu, uloží ji do příslušné proměnné a následně zavolá \texttt{saveSettings()}, aby se změna trvale uložila do paměti zařízení.
+\begin{lstlisting}
+// Prijem zmeny prahove hodnoty teploty z aplikace
+BLYNK_WRITE(V5) {
+  tempThreshold = param.asFloat();
+  Serial.println("\n=========================================");
+  Serial.printf(">>> ZMENA PRAHU: TEPLOTA = %.2f C <<<\n", tempThreshold);
+  Serial.println("=========================================\n");
+  saveSettings();
+}
+\end{lstlisting}
+
+\paragraph{Udržování spojení a synchronizace}
+Aby byla zajištěna neustálá a plynulá komunikace, je v hlavní smyčce \texttt{loop()} periodicky volána funkce \texttt{Blynk.run()}. Ta se na pozadí stará o veškerou síťovou komunikaci, zpracování příchozích zpráv a odesílání dat ve frontě. Pro zajištění konzistence stavu mezi zařízením a aplikací se při startu mikrokontroléru volá funkce \texttt{sendSettingsToBlynk()}, která do aplikace odešle aktuálně platné nastavení.
 
 \subsection{Platforma Blynk}
 
