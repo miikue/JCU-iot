@@ -342,7 +342,49 @@ BLYNK_WRITE(V5) {
 \paragraph{Udržování spojení a synchronizace}
 Aby byla zajištěna neustálá a plynulá komunikace, je v hlavní smyčce \texttt{loop()} periodicky volána funkce \texttt{Blynk.run()}. Ta se na pozadí stará o veškerou síťovou komunikaci, zpracování příchozích zpráv a odesílání dat ve frontě. Pro zajištění konzistence stavu mezi zařízením a aplikací se při startu mikrokontroléru volá funkce \texttt{sendSettingsToBlynk()}, která do aplikace odešle aktuálně platné nastavení.
 
+
 \subsection{Platforma Blynk}
+Blynk je komplexní IoT platforma, která umožňuje rychlý vývoj aplikací pro ovládání a monitorování hardwaru, jako je ESP32. Skládá se z cloudového serveru, mobilních aplikací pro iOS a Android a hardwarových knihoven. Její hlavní výhodou je jednoduchost, s jakou lze vytvořit plně funkční uživatelské rozhraní pomocí přetahování widgetů v mobilní aplikaci, bez nutnosti psát kód pro mobilní telefon. \autocite{blynk_web}
+
+\subsubsection{Uživatelské rozhraní (Dashboard)}
+Pro tento projekt bylo v aplikaci Blynk vytvořeno jednoduché uživatelské rozhraní (viz obrázek \ref{fig:blynk_dashboard}), které poskytuje veškeré potřebné informace a ovládací prvky na jedné obrazovce:
+\begin{itemize}
+    \item \textbf{Zobrazení telemetrie:} Widgety pro zobrazení aktuální teploty, vlhkosti, tlaku a kvality ovzduší.
+    \item \textbf{Stavové indikátory:} Textový indikátor, který jasně ukazuje, zda je systém v normálním stavu ("OK") nebo v alarmu.
+    \item \textbf{Nastavení prahových hodnot:} Pro každou měřenou veličinu je k dispozici posuvník, kterým může uživatel pohodlně nastavit hraniční hodnotu pro spuštění alarmu.
+    \item \textbf{Hlavní vypínač:} Přepínač, který umožňuje zapnout nebo vypnout celý monitorovací systém.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    % TODO: Vložit obrázek reálné aplikace
+    \framebox[0.4\textwidth][c]{\shortstack{Obrázek\\Blynk aplikace}}
+    \caption{Náhled uživatelského rozhraní v aplikaci Blynk.}
+    \label{fig:blynk_dashboard}
+\end{figure}
+
+\subsubsection{Notifikace a alarmy}
+Jednou z nejdůležitějších funkcí systému je schopnost aktivně upozornit uživatele na problém. V případě, že naměřené hodnoty překročí nastavené prahy, funkce \texttt{checkThresholds()} nejen aktivuje lokální signalizaci, ale také odešle do platformy Blynk kritickou událost.
+\begin{lstlisting}
+// Fragment kodu z funkce checkThresholds()
+if (!ledOk && !alarmTriggered) {
+  alarmTriggered = true;
+  Blynk.logEvent("alarm_event", "Alarm spusten!");
+  // ...
+}
+\end{lstlisting}
+Příkaz \texttt{Blynk.logEvent()} vytvoří záznam v časové ose (Timeline) v mobilní aplikaci. Klíčové je, že v nastavení šablony (template) v platformě Blynk lze tuto událost ("alarm\_event") nakonfigurovat tak, aby při svém výskytu automaticky odeslala \textbf{push notifikaci} na mobilní telefon uživatele. Díky tomu je majitel systému okamžitě informován o kritické situaci, i když aplikaci zrovna aktivně nepoužívá.
+
+\subsubsection{Omezení bezplatné verze (Free Tier)}
+Platforma Blynk je v základní verzi (Free Tier) nabízena zdarma, avšak s určitými omezeními. Pro vývoj a prototypování je tato verze dostatečná, ale pro produkční nasazení je třeba zvážit její limity. Mezi klíčové patří omezený počet zařízení, která lze k jednomu účtu připojit, a především limit na počet událostí (events), které lze za den odeslat. Událostí se rozumí například odeslání notifikace nebo změna hodnoty. Při překročení tohoto limitu může dojít k dočasnému zablokování komunikace. Právě z tohoto důvodu je v kódu implementována optimalizace, která odesílá data pouze při významné změně, a ne v pravidelných krátkých intervalech.
+
+\subsubsection{Alternativní řešení: Home Assistant}
+Jako alternativa ke komerčním cloudovým platformám, jako je Blynk, se nabízí open-source řešení. Nejpopulárnějším zástupcem je \textbf{Home Assistant}. Jedná se o výkonný systém pro domácí automatizaci, který běží lokálně (např. na Raspberry Pi) a dává uživateli plnou kontrolu nad jeho daty a zařízením.
+\begin{itemize}
+    \item \textbf{Výhody:} Nezávislost na cloudu a připojení k internetu pro lokální funkce, obrovská komunitní podpora, tisíce integrací pro různá zařízení, žádné poplatky za provoz (kromě hardwaru).
+    \item \textbf{Nevýhody:} Vyšší počáteční náročnost na instalaci a konfiguraci, nutnost spravovat vlastní server.
+\end{itemize}
+Pro tento projekt by integrace s Home Assistant byla logickým dalším krokem pro zvýšení spolehlivosti a rozšíření možností automatizace.
 
 
 \section{Závěr}
@@ -352,7 +394,11 @@ Monitorovací systém kotelny s využitím platformy Blynk představuje efektivn
 Během vývoje systému byly identifikovány následující problémy:
 \begin{itemize}
     \item \textbf{Omezená spolehlivost senzoru MQ135:} Tento senzor může být náchylný k falešným pozitivům a negativům, což může vést k nesprávným indikacím stavu vzduchu v kotelně.
-    \item \textbf{Závislost na připojení k internetu:} Systém je závislý na stabilním připojení k internetu pro komunikaci s platformou Blynk, což může být problém v případě výpadku sítě.
+    
+    \item \textbf{Nedostatečná robustnost při výpadku Wi-Fi:} Současná implementace se spoléhá na výchozí chování knihovny Blynk, které je blokující. Při ztrátě Wi-Fi připojení se funkce \texttt{Blynk.run()} pokouší o znovupřipojení a po tuto dobu blokuje zbytek programu. V důsledku toho se v době výpadku nejen ztratí vzdálený dohled, ale zařízení přestane vykonávat i lokální operace, jako je čtení senzorů a aktualizace stavových LED diod.
+    
+    \item \textbf{Limity bezplatné verze platformy Blynk:} Jak již bylo zmíněno, bezplatná verze má přísný denní limit na počet zpráv (událostí). Do tohoto limitu se započítávají nejen data ze senzorů a alarmy, ale i interní "keep-alive" zprávy nutné pro udržení spojení. Ačkoliv je v kódu implementována optimalizace odesílání, při častých změnách hodnot hrozí vyčerpání limitu a dočasné znefunkčnění vzdáleného dohledu a notifikací.
+
     \item \textbf{Omezené možnosti rozšíření:} Systém je navržen pro konkrétní sadu senzorů a funkcí, což může omezit jeho schopnost přizpůsobit se budoucím potřebám nebo integraci s dalšími zařízeními v rámci chytré domácnosti.
 \end{itemize}
 
