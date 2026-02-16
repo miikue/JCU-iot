@@ -7,6 +7,7 @@
 ]{geometry}
 
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{circuitikz}
@@ -137,13 +138,10 @@ Jako vývojové prostředí pro psaní kódu byl použit edit Visual Studio Code
 \subsubsection{PlatformIO}
 PlatformIO je open-source ekosystém pro vývoj IoT projektů. Bylo použito jako rozšíření pro Visual Studio Code pro správu knihoven, kompilaci kódu a nahrávání firmwaru do mikrokontroléru ESP32.
 
-\subsubsection{C++ a knihovna Wire}
-Program pro ESP32 je napsán v jazyce C++. Pro komunikaci se senzory přes sběrnici I2C je využita standardní knihovna \texttt{Wire}.
-
 \subsubsection{Platforma Blynk}
 Pro vizualizaci dat a zasílání notifikací je využita platforma Blynk. Komunikace probíhá pomocí knihovny pr ESP32, která zjednodušuje připojení k serveru Blynk a výměnu dat.
 
-
+\newpage
 
 \section{Návrh zapojení a signalizace}
 Pro realizaci monitorovacího systému kotelny bude použito následující zapojení:
@@ -177,15 +175,89 @@ Pro lepší pochopení logiky programu pro monitorovací systém kotelny je ní�
 \end{figure}
 
 \subsection{Programový kód}
-Programový kód pro ESP32 bude napsán v jazyce C++ a bude využívat knihovny pro komunikaci s Blynk, I2C a analogové vstupy. Kód bude strukturován tak, aby byl snadno čitelný a udržovatelný, s jasně definovanými funkcemi pro sběr dat, kontrolu prahů, aktualizaci LED diod a komunikaci s platformou Blynk. Příklad ukazuje logiku posuzování dat ze senzorů a aktualizace stavu LED diod:
-\begin{lstlisting}
-#include <Wire.h>
-#include <BlynkSimpleEsp32.h>
-#include <Adafruit_BME280.h>
-\end{lstlisting}
+Programový kód pro ESP32 bude napsán v jazyce C++ a bude využívat knihovny pro komunikaci s Blynk, I2C a analogové vstupy. Kód bude strukturován tak, aby byl snadno čitelný a udržovatelný, s jasně definovanými funkcemi pro sběr dat, kontrolu prahů, aktualizaci LED diod a komunikaci s platformou Blynk.
 
 \subsubsection{Použité knihovny}
+Pro správnou funkci zařízení je využíváno několik klíčových knihoven, které zajišťují komunikaci s hardwarem a cloudovými službami.
+\begin{itemize}
+    \item \texttt{Wire.h}: Standardní knihovna pro I2C komunikaci, využívaná pro spojení se senzorem BME280.
+    \item \texttt{Adafruit\_BME280.h}: Knihovna od společnosti Adafruit pro snadné čtení hodnot teploty, vlhkosti a tlaku ze senzoru BME280.
+    \item \texttt{MQ135.h}: Knihovna určená pro senzor kvality ovzduší MQ135, která zjednodušuje kalibraci a čtení hodnot znečištění.
+    \item \texttt{WiFi.h}: Standardní knihovna pro ESP32, která umožňuje připojení k bezdrátové síti.
+    \item \texttt{BlynkSimpleEsp32.h}: Oficiální knihovna platformy Blynk pro zjednodušení komunikace mezi mikrokontrolérem a Blynk serverem.
+    \item \texttt{LittleFS.h}: Souborový systém pro ESP32, který slouží k ukládání konfiguračních souborů, v tomto případě prahových hodnot.
+    \item \texttt{ArduinoJson.h}: Knihovna pro práci s datovým formátem JSON, využívaná pro serializaci a deserializaci nastavení ukládaných do LittleFS.
+\end{itemize}
+
 \subsubsection{Inicializace prostředí}
+Inicializace systému probíhá ve funkci \texttt{setup()}, která je automaticky zavolána po startu mikrokontroléru. Tato funkce provádí sekvenci kroků nezbytných pro přípravu zařízení k provozu.
+
+\paragraph{Načtení uloženého nastavení}
+Na začátku se systém pokusí načíst dříve uložené prahové hodnoty z interního souborového systému LittleFS. Pokud soubor neexistuje, použijí se výchozí hodnoty.
+\begin{lstlisting}
+void setup() {
+  Serial.begin(115200);
+  loadSettings();
+  // ...
+\end{lstlisting}
+
+\paragraph{Nastavení hardwarových periferií}
+Dále dojde k inicializaci výstupních pinů pro LED diody, spuštění I2C sběrnice pro komunikaci se senzory a konfiguraci analogově-digitálního převodníku (ADC) pro senzor MQ135.
+\begin{lstlisting}
+  // ...
+  // LED indicators
+  pinMode(LED_OK_PIN, OUTPUT);
+  pinMode(LED_ERROR_PIN, OUTPUT);
+  pinMode(LED_Status_PIN, OUTPUT);
+
+  // I2C and ADC
+  Wire.begin(42, 2);
+  analogSetAttenuation(ADC_11db);
+  // ...
+\end{lstlisting}
+
+\paragraph{Inicializace senzorů}
+Systém spustí komunikaci se senzorem BME280 a provede 10sekundovou pauzu pro zahřátí a stabilizaci senzoru kvality ovzduší MQ135.
+\begin{lstlisting}
+  // ...
+  // BME280 sensor
+  bme.begin(0x77);
+
+  // MQ135 calibration in clean air
+  Serial.println("Heating MQ135 for 10 seconds...");
+  for(int i = 10; i > 0; i--) {
+    // ... LED blinking ...
+    delay(1000);
+  }
+  // ...
+\end{lstlisting}
+
+\paragraph{Připojení k síti a synchronizace}
+Po inicializaci hardwaru se zařízení připojí k Wi-Fi a k serveru Blynk. Následně odešle své aktuální nastavení do mobilní aplikace, aby bylo zajištěno, že uživatelské rozhraní odpovídá stavu zařízení.
+\begin{lstlisting}
+  // ...
+  // Wi-Fi and Blynk connection
+  Blynk.begin(BLYNK_AUTH_TOKEN, WIFI_SSID, WIFI_PASSWORD);
+
+  // Send current settings to Blynk
+  sendSettingsToBlynk();
+  // ...
+\end{lstlisting}
+
+\paragraph{Nastavení časovačů a prvotní odeslání dat}
+Nakonec se provede první měření, jehož výsledky se ihned odešlou do aplikace. Zároveň se nastaví dva časovače: jeden spouští kontrolu senzorů každou sekundu a druhý zajišťuje kompletní synchronizaci dat každých 15 minut.
+\begin{lstlisting}
+  // ...
+  // First reading and initialization
+  readSensors();
+  sendSensorDataBlynk(true);
+
+  // Timers for periodic tasks
+  timer.setInterval(1000L, oneSecondTask);
+  timer.setInterval(900000L, []() { sendSensorDataBlynk(true); });
+}
+\end{lstlisting}
+
 \subsubsection{Popis loopu}
 \subsubsection{Popis hlídání podmínek}
 \subsubsection{Komunikace s platformou Blynk}
