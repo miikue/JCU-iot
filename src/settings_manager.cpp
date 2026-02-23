@@ -2,26 +2,26 @@
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
-// Cesta k souboru s nastavením
+// Cesta k souboru s nastavenim
 const char* SETTINGS_FILE = "/settings.json";
 
 void loadSettings() {
     Serial.println("Inicializuji LittleFS...");
     if (!LittleFS.begin()) {
-        Serial.println("Chyba při inicializaci LittleFS.");
+        Serial.println("Chyba pri inicializaci LittleFS.");
         return;
     }
-    Serial.println("LittleFS inicializováno.");
+    Serial.println("LittleFS inicializovano.");
 
     if (!LittleFS.exists(SETTINGS_FILE)) {
-        Serial.println("Soubor settings.json nenalezen. Používám výchozí nastavení.");
-        saveSettings(); // Uloží výchozí nastavení do souboru
+        Serial.println("Soubor settings.json nenalezen. Pouzivam vychozi nastaveni.");
+        saveSettings(); // Ulozi vychozi nastaveni do souboru
         return;
     }
 
     File settingsFile = LittleFS.open(SETTINGS_FILE, "r");
     if (!settingsFile) {
-        Serial.println("Chyba při otevírání settings.json pro čtení.");
+        Serial.println("Chyba pri otevirani settings.json pro cteni.");
         return;
     }
 
@@ -30,9 +30,9 @@ void loadSettings() {
     settingsFile.close();
 
     if (error) {
-        Serial.print(F("Chyba při parsování settings.json: "));
+        Serial.print(F("Chyba pri parsovani settings.json: "));
         Serial.println(error.f_str());
-        Serial.println("Používám výchozí nastavení.");
+        Serial.println("Pouzivam vychozi nastaveni.");
         return;
     }
 
@@ -42,8 +42,8 @@ void loadSettings() {
     airQualityThreshold = doc["airQualityThreshold"] | 150.0;
     onOff = doc["onOff"] | false;
 
-    Serial.println("Nastavení úspěšně načteno:");
-    Serial.printf("  Teplota: %.2f °C\n", tempThreshold);
+    Serial.println("Nastaveni uspesne nacteno:");
+    Serial.printf("  Teplota: %.2f C\n", tempThreshold);
     Serial.printf("  Vlhkost: %.2f %%\n", humThreshold);
     Serial.printf("  Tlak: %.2f hPa\n", pressThreshold);
     Serial.printf("  Kvalita vzduchu: %.2f ppm\n", airQualityThreshold);
@@ -51,14 +51,14 @@ void loadSettings() {
 }
 
 void saveSettings() {
-    if (!LittleFS.begin()) { // Zajištění inicializace, pokud nebyla dříve
-        Serial.println("Chyba při inicializaci LittleFS pro ukládání.");
+    if (!LittleFS.begin()) { // Zajisteni inicializace, pokud nebyla drive
+        Serial.println("Chyba pri inicializaci LittleFS pro ukladani.");
         return;
     }
 
     File settingsFile = LittleFS.open(SETTINGS_FILE, "w");
     if (!settingsFile) {
-        Serial.println("Chyba při otevírání settings.json pro zápis.");
+        Serial.println("Chyba pri otevirani settings.json pro zapis.");
         return;
     }
 
@@ -70,9 +70,9 @@ void saveSettings() {
     doc["onOff"] = onOff;
 
     if (serializeJson(doc, settingsFile) == 0) {
-        Serial.println(F("Chyba při zápisu do settings.json."));
+        Serial.println(F("Chyba pri zapisu do settings.json."));
     } else {
-        Serial.println("Nastavení úspěšně uloženo.");
+        Serial.println("Nastaveni uspesne ulozeno.");
     }
     settingsFile.close();
 }

@@ -45,7 +45,7 @@
 \newcommand{\Univerzita}{Jihočeská univerzita v Českých Budějovicích}
 \newcommand{\Fakulta}{Přírodovědecká fakulta}
 \newcommand{\NazevPrace}{Hlídací systém kotelny s využítím platformy Blynk}
-\newcommand{\TypPrace}{Semestrální práce}
+\newcommand{\TypPrace}{Semestrální práce předmětu IoT}
 \newcommand{\Autor}{Vít Horčička}
 
 \newcommand{\MestoRok}{České Budějovice 2026}
@@ -423,5 +423,13 @@ Během vývoje systému byly identifikovány následující problémy:
 \newpage
 \printbibliography[heading=bibintoc,title={Seznam použité literatury}]
 
+\newpage
+\appendix
+\section{Přílohy}
+\subsection{Zdrojový kód ESP32}
+
+\lstinputlisting[language=C++, caption={Hlavní program (main.cpp)}]{../src/main.cpp}
+
+\lstinputlisting[language=C++, caption={Pomocný soubor pro práci se soubory (settings\_manager.cpp)}]{../src/settings_manager.cpp}
 
 \end{document} % Konec obsahu
