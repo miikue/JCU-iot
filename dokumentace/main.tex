@@ -373,9 +373,8 @@ Pro tento projekt bylo v aplikaci Blynk vytvořeno jednoduché uživatelské roz
 \end{itemize}
 
 \begin{figure}[H]
-    \centering
-    % TODO: Vložit obrázek reálné aplikace
-    \framebox[0.4\textwidth][c]{\shortstack{Obrázek\\Blynk aplikace}}
+  \centering
+  \includegraphics[ width=0.8\linewidth]{dashboard.png}
     \caption{Náhled uživatelského rozhraní v aplikaci Blynk.}
     \label{fig:blynk_dashboard}
 \end{figure}
@@ -417,6 +416,7 @@ Během vývoje systému byly identifikovány následující problémy:
     \item \textbf{Limity bezplatné verze platformy Blynk:} Jak již bylo zmíněno, bezplatná verze má přísný denní limit na počet zpráv (událostí). Do tohoto limitu se započítávají nejen data ze senzorů a alarmy, ale i interní "keep-alive" zprávy nutné pro udržení spojení. Ačkoliv je v kódu implementována optimalizace odesílání, při častých změnách hodnot hrozí vyčerpání limitu a dočasné znefunkčnění vzdáleného dohledu a notifikací.
 
     \item \textbf{Omezené možnosti rozšíření:} Systém je navržen pro konkrétní sadu senzorů a funkcí, což může omezit jeho schopnost přizpůsobit se budoucím potřebám nebo integraci s dalšími zařízeními v rámci chytré domácnosti.
+    \item \textbf{Spoléhání na fungování senzorů:} Systém nepočítá se závadou senzorů a tím pádem v případě chybného senzoru nebude správně alarmovat a může způsobit pád celého systému.
 \end{itemize}
 
 \nocite{*}
