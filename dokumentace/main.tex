@@ -129,7 +129,7 @@ Senzor MQ135 je senzor kvality ovzduší, který je schopen detekovat širokou �
 Pro snadné a rychlé prototypování bez nutnosti pájení je použit breadboard. Umožňuje flexibilní propojování jednotlivých komponent, jako jsou senzory a LED diody, s mikrokontrolérem ESP32.
 
 \subsubsection{LED diody}
-V projektu jsou použity tři LED diody různých barev (zelená, žlutá, červená) pro vizuální signalizaci stavu systému. Jejich specifické funkce pro indikaci normálního provozu, varování a kritických stavů jsou popsány v kapitole \ref{sec:signalizace_led}.
+V projektu jsou použity tři LED diody různých barev (zelená, modrá, červená) pro vizuální signalizaci stavu systému. Jejich specifické funkce pro indikaci normálního provozu, varování a kritických stavů jsou popsány v kapitole \ref{sec:signalizace_led}.
 
 \subsection{Software}
 \subsubsection{Visual Studio Code}
@@ -158,7 +158,7 @@ Pro realizaci monitorovacího systému kotelny bude použito následující zapo
 Pro indikaci různých stavů systému budou použity LED diody s následujícími funkcemi:
 \begin{itemize}
     \item \textbf{Zelená LED:} Indikuje normální provoz a bezpečné podmínky v kotelně.
-    \item \textbf{Žlutá LED:} Indikuje mírné odchylky od normálních podmínek, které mohou vyžadovat pozornost, například mírně zvýšenou teplotu nebo vlhkost.
+    \item \textbf{Modrá LED:} Indikuje běh celého programu, dalo by se říct že funguje jako "activity light".
     \item \textbf{Červená LED:} Indikuje kritické podmínky, jako je přehřátí, únik plynu nebo vysoká koncentrace škodlivých látek, které vyžadují okamžitou reakci.
 \end{itemize}
 
@@ -172,6 +172,13 @@ Pro lepší pochopení logiky programu pro monitorovací systém kotelny je ní�
     \centering
     \input{flowdiagram}
     \caption{Diagram programu pro monitorovací systém kotelny.}
+\end{figure}
+
+\subsubsection{Odesílaní dat do platformy Blynk}
+\begin{figure}[H]
+  \centering
+  \input{flowdiagram_odesilani}
+  \caption{adslkm}
 \end{figure}
 
 \subsection{Programový kód}

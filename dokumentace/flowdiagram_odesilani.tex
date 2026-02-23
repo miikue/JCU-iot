@@ -1,0 +1,11 @@
+
+\begin{tikzpicture}[>=latex]
+  \node[draw, align=center] (start) at (0,0) {Start};
+  \node[draw, align=center] (loop1) at (-3,-2) {Loop 1: Posílat data na cloud};
+  \node[draw, align=center] (loop2) at (3,-2) {Loop 2: Hlídání velkých změn};
+
+  \draw [<->] (start) -- (loop1);
+  \draw [<->] (loop1) -- (loop2);
+
+  \draw [<->] (loop1) edge[bend right=30] node[below] {Přeskočit} (loop2);
+\end{tikzpicture}
