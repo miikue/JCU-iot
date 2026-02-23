@@ -1,11 +1,28 @@
+\begin{tikzpicture}
+    \node (start) [startstop] at (0, 10) {Start};
+    \node (read) [process] at (0, 8.5) {Čtení hodnot};
+    \node (calc) [process] at (0, 7) {Výpočet rozdílu};
+    
+    \node (timecheck) [decision] at (0, 4.5) {Čas > 15 min?};
+    \node (compare) [decision] at (0, 1.5) {Rozdíl > Práh?};
+    
+    \node (sendblynk) [process] at (5, 1.5) {Odeslání na Blynk};
+    \node (saveval) [process] at (5, -0.5) {Uložení do pos. hodnoty};
+    
+    \node (logic) [process] at (0, -2.5) {Zpracování logiky};
 
-\begin{tikzpicture}[>=latex]
-  \node[draw, align=center] (start) at (0,0) {Start};
-  \node[draw, align=center] (loop1) at (-3,-2) {Loop 1: Posílat data na cloud};
-  \node[draw, align=center] (loop2) at (3,-2) {Loop 2: Hlídání velkých změn};
-
-  \draw [<->] (start) -- (loop1);
-  \draw [<->] (loop1) -- (loop2);
-
-  \draw [<->] (loop1) edge[bend right=30] node[below] {Přeskočit} (loop2);
+    \draw [arrow] (start) -- (read);
+    \draw [arrow] (read) -- (calc);
+    \draw [arrow] (calc) -- (timecheck);
+    
+    \draw [arrow] (timecheck) -- node[right] {\footnotesize Ne} (compare);
+    \draw [arrow] (timecheck.east) -| node[above, near start] {\footnotesize Ano} (sendblynk.north);
+    
+    \draw [arrow] (compare) -- node[above] {\footnotesize Ano} (sendblynk);
+    \draw [arrow] (compare) -- node[right] {\footnotesize Ne} (logic);
+    
+    \draw [arrow] (sendblynk) -- (saveval);
+    \draw [arrow] (saveval.south) |- (logic.east);
+    
+    \draw [arrow] (logic.west) -- (-3.5, -2.5) -- (-3.5, 8.5) -- (read.west);
 \end{tikzpicture}

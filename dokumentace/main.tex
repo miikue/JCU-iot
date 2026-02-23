@@ -167,19 +167,29 @@ Systém bude v pravidelných intervalech sbírat data ze senzorů a kontrolovat 
 V určitých časových intervalech bude systém také odesílat data do Blynk pro dlouhodobé sledování a analýzu trendů, což umožní uživateli lépe porozumět podmínkám v kotelně a případně optimalizovat její provoz.
 
 \subsection{Diagram programu}
-Pro lepší pochopení logiky programu pro monitorovací systém kotelny je níže uveden diagram, který znázorňuje hlavní funkční bloky a jejich vzájemné interakce.
-\begin{figure}[H]
-    \centering
-    \input{flowdiagram}
-    \caption{Diagram programu pro monitorovací systém kotelny.}
-\end{figure}
+  Pro lepší pochopení logiky programu pro monitorovací systém kotelny je níže uveden diagram, který znázorňuje hlavní funkční bloky a jejich vzájemné interakce.
+  \begin{figure}[H]
+      \centering
+      \input{flowdiagram}
+      \caption{Diagram programu pro monitorovací systém kotelny.}
+  \end{figure}
 
 \subsubsection{Odesílaní dat do platformy Blynk}
-\begin{figure}[H]
-  \centering
-  \input{flowdiagram_odesilani}
-  \caption{adslkm}
-\end{figure}
+  Tento diagram popisuje jak se data kontorlují oproti pevně definovaných prahových hodnot změn. Pokud změna oproti naposledy odeslaným hodnotám bude větší tak je teprve odešle.
+  To šetří odeslaná data poduk v místě nedošlo k žádné změně. Ale pokud by se data opravdu vůbec neměnily tak je to ošetřené aby to každých 15 minut odeslalo i bez žádné změny. To primárně slouží k udržení konnzostence grafu. 
+  \begin{figure}[H]
+    \centering
+    \input{flowdiagram_odesilani}
+    \caption{Diagram odesílání dat na cloud}
+  \end{figure}
+
+\subsubsection{Logika nastavení hodnot prahů alarmu}
+  Program k možnosti alarmování musí mít nastavené prahové hodnoty a aby bylo omezeno nutné přehrání programu při změně tak se implemenotval systém posílání nových nastavení a jejich následné uložení.
+  \begin{figure}[H]
+    \centering
+    \input{flowdiagram_logika}
+    \caption{Diagram logiky nastavení alarmu}
+  \end{figure}
 
 \subsection{Programový kód}
 Programový kód pro ESP32 bude napsán v jazyce C++ a bude využívat knihovny pro komunikaci s Blynk, I2C a analogové vstupy. Kód bude strukturován tak, aby byl snadno čitelný a udržovatelný, s jasně definovanými funkcemi pro sběr dat, kontrolu prahů, aktualizaci LED diod a komunikaci s platformou Blynk.
@@ -224,15 +234,15 @@ Dále dojde k inicializaci výstupních pinů pro LED diody, spuštění I2C sb�
 \end{lstlisting}
 
 \paragraph{Inicializace senzorů}
-Systém spustí komunikaci se senzorem BME280 a provede 10sekundovou pauzu pro zahřátí a stabilizaci senzoru kvality ovzduší MQ135.
+Systém spustí komunikaci se senzorem BME280 a provede minutovou pauzu pro zahřátí a stabilizaci senzoru kvality ovzduší MQ135.
 \begin{lstlisting}
   // ...
   // BME280 sensor
   bme.begin(0x77);
 
   // MQ135 calibration in clean air
-  Serial.println("Heating MQ135 for 10 seconds...");
-  for(int i = 10; i > 0; i--) {
+  Serial.println("Heating MQ135 for 60 seconds...");
+  for(int i = 60; i > 0; i--) {
     // ... LED blinking ...
     delay(1000);
   }

@@ -1,0 +1,17 @@
+\begin{tikzpicture}
+    \node (start) [startstop] at (0, 8) {Načtení configu z FS};
+    \node (sendblynk) [process] at (0, 6) {Odeslání configu na Blynk};
+    
+    \node (check) [decision] at (0, 3) {Přijat nový config?};
+    \node (update) [process] at (5, 3) {Aktualizace proměnných};
+    \node (savefs) [process] at (5, 1) {Uložení na FS};
+
+    \draw [arrow] (start) -- (sendblynk);
+    \draw [arrow] (sendblynk) -- (check);
+    
+    \draw [arrow] (check) -- node[above] {\footnotesize Ano} (update);
+    \draw [arrow] (update) -- (savefs);
+    
+    \draw [arrow] (check.south) -- node[right] {\footnotesize Ne} (0, 1) -| (-2.5, 4.5) -- (0, 4.5);
+    \draw [arrow] (savefs.south) |- (0, -0.5) -| (-3.5, 4.5) -- (0, 4.5);
+\end{tikzpicture}
