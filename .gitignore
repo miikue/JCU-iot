@@ -13,6 +13,5 @@
 test/
 include/
 lib/
-secrets.h
 .pio/
 .vscode/

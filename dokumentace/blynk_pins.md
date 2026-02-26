@@ -1,6 +1,6 @@
 # Dokumentace Virtuálních Pinů pro Blynk
 
-Tento dokument popisuje význam jednotlivých virtuálních pinů (Vx) používaných v projektu `iot1` pro snadnější nastavení mobilní aplikace Blynk.
+Tento dokument popisuje význam jednotlivých virtuálních pinů (Vx) používaných v projektu `JCU-iot` pro snadnější nastavení mobilní aplikace Blynk.
 
 ---
 
@@ -14,6 +14,7 @@ Tyto piny slouží k zobrazování dat ze senzorů v aplikaci. Pro tyto piny nas
 | `V1`  | Vlhkost            | `%` (float)     | `Gauge`, `Labeled Value`   |
 | `V2`  | Tlak               | `hPa` (float)   | `Gauge`, `Labeled Value`   |
 | `V3`  | Kvalita vzduchu    | `ppm` (float)   | `Gauge`, `Labeled Value`   |
+| `V10` | Stav alarmu         | `OK` / `ALARM` (string) | `Labeled Value`, `Styled Text` |
 
 ---
 
@@ -28,3 +29,14 @@ Tyto piny slouží k ovládání zařízení a nastavování prahových hodnot z
 | `V7`  | Prahová hodnota tlaku    | `hPa` (float)   | `Slider`, `Numeric Input`  |
 | `V8`  | Prahová hodnota kvality vzduchu | `ppm` (float)   | `Slider`, `Numeric Input`  |
 | `V9`  | Zapnutí/Vypnutí regulace | `0` / `1` (int) | `Button`, `Switch`         |
+
+---
+
+## Události (Blynk Events)
+
+V kódu jsou volány také následující události přes `Blynk.logEvent(...)`:
+
+- `alarm_event` – při přechodu do alarmového stavu
+- `ok_event` – při návratu hodnot do normálu
+
+Tyto eventy je potřeba mít vytvořené v Blynk Template, pokud chceš využívat notifikace a timeline.
